@@ -1,7 +1,7 @@
 import React from "react";
 import { ScrollView, StyleSheet, Text } from "react-native";
 
-export default function SettingsScreen() {
+export default function ManualScreen() {
 	return (
 		<ScrollView style={styles.container}>
 			<Text>some thing</Text>
@@ -9,8 +9,8 @@ export default function SettingsScreen() {
 	);
 }
 
-SettingsScreen.navigationOptions = {
-	title: "app.json"
+ManualScreen.navigationOptions = {
+	title: "Manual"
 };
 
 const styles = StyleSheet.create({

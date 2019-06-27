@@ -7,7 +7,7 @@ import {
 
 import TabBarIcon from "../components/TabBarIcon";
 import HomeScreen from "../screens/HomeScreen";
-import LinksScreen from "../screens/LinksScreen";
+import ApiScreen from "../screens/ApiScreen";
 import ManualScreen from "../screens/ManualScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 
@@ -29,16 +29,16 @@ HomeStack.navigationOptions = {
 	)
 };
 
-const LinksStack = createStackNavigator({
-	Links: LinksScreen
+const ApiStack = createStackNavigator({
+	Api: ApiScreen
 });
 
-LinksStack.navigationOptions = {
-	tabBarLabel: "Links",
+ApiStack.navigationOptions = {
+	tabBarLabel: "API",
 	tabBarIcon: ({ focused }) => (
 		<TabBarIcon
 			focused={focused}
-			name={Platform.OS === "ios" ? "ios-link" : "md-link"}
+			name={Platform.OS === "ios" ? "ios-wifi" : "md-wifi"}
 		/>
 	)
 };
@@ -52,7 +52,7 @@ ManualStack.navigationOptions = {
 	tabBarIcon: ({ focused }) => (
 		<TabBarIcon
 			focused={focused}
-			name={Platform.OS === "ios" ? "ios-link" : "md-link"}
+			name={Platform.OS === "ios" ? "ios-code" : "md-code"}
 		/>
 	)
 };
@@ -73,7 +73,7 @@ SettingsStack.navigationOptions = {
 
 export default createBottomTabNavigator({
 	HomeStack,
-	LinksStack,
+	ApiStack,
 	ManualStack,
 	SettingsStack
 });

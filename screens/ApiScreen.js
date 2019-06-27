@@ -1,42 +1,27 @@
-import React, { Component } from "react";
-import {
-	ScrollView,
-	StyleSheet,
-	Text,
-	Picker,
-	Button,
-	View
-} from "react-native";
+import React from "react";
+import { ScrollView, StyleSheet, Text } from "react-native";
 import { ApolloClient, HttpLink, InMemoryCache } from "apollo-boost";
-import { ApolloProvider, graphql, Query } from "react-apollo";
+import { ApolloProvider, graphql } from "react-apollo";
 import gql from "graphql-tag";
 
 const carQuery = gql`
 	{
-		ymmes(db_market: "US", year: 37) {
+		ymmes(db_market: "US", year: 37, make: 4, model: 28) {
 			text
 			enum
 		}
 	}
 `;
 
-const client = new ApolloClient({
-	link: new HttpLink({
-		uri: "http://34.210.160.172:4000/graphql",
-		headers: {
-			// authorization: "YOUR_TOKEN" // on production you need to store token in storage or in redux persist, for demonstration purposes we do this like that
-		}
-	}),
-	cache: new InMemoryCache()
-});
-
-// client
-// 	.query({
-// 		query: carQuery
-// 	})
-// 	.then(res => console.log(res));
-
-function customQuery(db_market, year, make, model, trim, option, engine) {
+function customQuery(
+	db_market = "",
+	year = undefined,
+	make = undefined,
+	model = undefined,
+	trim = undefined,
+	option = undefined,
+	engine = undefined
+) {
 	if (db_market === "") {
 		return gql`
 			query {
@@ -180,7 +165,11 @@ const CarComponent = graphql(carQuery)(props => {
 		return (
 			<ScrollView>
 				{ymmes.map(ymmes => {
-					return <Text key={ymmes.text}>{ymmes.text}</Text>;
+					return (
+						<Text key={ymmes.text}>
+							{ymmes.text} / {ymmes.enum}
+						</Text>
+					);
 				})}
 			</ScrollView>
 		);
@@ -188,88 +177,36 @@ const CarComponent = graphql(carQuery)(props => {
 	return <Text>loading...</Text>;
 });
 
-export default class SettingsScreen extends Component {
-	constructor(props) {
-		super(props);
-		this.state = {
-			ymmes: {
-				db_market: "",
-				year: undefined,
-				make: undefined,
-				model: undefined,
-				trim: undefined,
-				option: undefined,
-				engine: undefined
-			}
-		};
-	}
+const client = new ApolloClient({
+	link: new HttpLink({
+		uri: "http://34.210.160.172:4000/graphql",
+		headers: {
+			// authorization: "YOUR_TOKEN" // on production you need to store token in storage or in redux persist, for demonstration purposes we do this like that
+		}
+	}),
+	cache: new InMemoryCache()
+});
 
-	onPressQuery() {
-		async () => {
-			const { data } = await client.query({
-				query: carQuery
-			});
-			await console.log(data);
-		};
-
-		// return (
-		// 	<ApolloProvider client={client}>
-		// 		<Text style={styles.welcome}>Result bellow:</Text>
-		// 		<CarComponent />
-		// 	</ApolloProvider>
-		// );
-	}
-
-	updateMarket = market => {
-		this.setState({ ymmes: { db_market: market } });
-	};
-
-	componentDidUpdate() {
-		console.log(this.state.ymmes.db_market);
-	}
-
-	render() {
-		return (
-			<View style={styles.container}>
-				<Text>Chose market</Text>
-				<Picker
-					style={{ width: 150 }}
-					selectedValue={this.state.ymmes.db_market}
-					onValueChange={this.updateMarket}
-				>
-					<Picker.Item label="us" value="us" />
-					<Picker.Item label="international" value="int" />
-				</Picker>
-				<View style={{ width: 150 }}>
-					<Button onPress={this.onPressQuery} title="Query" color="#841584" />
-				</View>
-				<ApolloProvider client={client}>
-					<Query query={carQuery}>
-						{({ error, loading, data }) => {
-							if (error) return <div>error! ${error}</div>;
-							if (loading) return "Loading...";
-							const { ymmes } = data;
-							return ymmes.map(ymmes => {
-								return <Text key={ymmes.text}>{ymmes.text}</Text>;
-							});
-						}}
-					</Query>
-				</ApolloProvider>
-			</View>
-		);
-	}
+export default function LinksScreen() {
+	return (
+		<ScrollView style={styles.container}>
+			<Text>graphql query</Text>
+			<ApolloProvider client={client}>
+				<Text style={styles.welcome}>Result bellow:</Text>
+				<CarComponent />
+			</ApolloProvider>
+		</ScrollView>
+	);
 }
 
-SettingsScreen.navigationOptions = {
-	title: "App"
+LinksScreen.navigationOptions = {
+	title: "Test"
 };
 
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 		paddingTop: 15,
-		backgroundColor: "#fff",
-		alignItems: "center",
-		justifyContent: "center"
+		backgroundColor: "#fff"
 	}
 });

@@ -5,15 +5,16 @@ import {
 	Text,
 	Picker,
 	Button,
-	View
+	View,
+	TouchableOpacity
 } from "react-native";
 import { ApolloClient, HttpLink, InMemoryCache } from "apollo-boost";
 import { ApolloProvider, graphql, Query } from "react-apollo";
 import gql from "graphql-tag";
 
 const carQuery = gql`
-	{
-		ymmes(db_market: "US", year: 37) {
+	query($market: String!) {
+		ymmes(db_market: $market) {
 			text
 			enum
 		}
@@ -34,6 +35,10 @@ const client = new ApolloClient({
 // 	.query({
 // 		query: carQuery
 // 	})
+// 	.then(res => console.log(res));
+
+// client
+// 	.query({ query: carQuery, variables: { db_market: "US" } })
 // 	.then(res => console.log(res));
 
 function customQuery(db_market, year, make, model, trim, option, engine) {
@@ -193,24 +198,37 @@ export default class SettingsScreen extends Component {
 		super(props);
 		this.state = {
 			ymmes: {
-				db_market: "",
-				year: undefined,
-				make: undefined,
-				model: undefined,
-				trim: undefined,
-				option: undefined,
-				engine: undefined
-			}
+				db_market: "us",
+				year: { text: "", enum: undefined },
+				make: { text: "", enum: undefined },
+				model: { text: "", enum: undefined },
+				trim: { text: "", enum: undefined },
+				option: { text: "", enum: undefined },
+				engine: { text: "", enum: undefined }
+			},
+			showQuery: ""
 		};
 	}
 
-	onPressQuery() {
-		async () => {
-			const { data } = await client.query({
-				query: carQuery
-			});
-			await console.log(data);
-		};
+	resetQuery() {
+		this.setState({
+			ymmes: {
+				db_market: "us",
+				year: { text: "", enum: undefined },
+				make: { text: "", enum: undefined },
+				model: { text: "", enum: undefined },
+				trim: { text: "", enum: undefined },
+				option: { text: "", enum: undefined },
+				engine: { text: "", enum: undefined }
+			},
+			showQuery: ""
+		});
+	}
+
+	onPressQuery(query) {
+		if (query === "query1") {
+			this.setState({ showQuery: "query1" });
+		}
 
 		// return (
 		// 	<ApolloProvider client={client}>
@@ -225,36 +243,91 @@ export default class SettingsScreen extends Component {
 	};
 
 	componentDidUpdate() {
-		console.log(this.state.ymmes.db_market);
+		console.log("Market:", this.state.ymmes.db_market);
+		console.log("Now show:", this.state.showQuery);
+	}
+
+	queryTest1() {
+		// 	console.log("query", market);
+		// 	return gql`
+		// 	query($market: String!){
+		// 		ymmes(db_market: $market) {
+		// 			text
+		// 			enum
+		// 		}
+		// 	}
+		// `;
 	}
 
 	render() {
+		const query1 = gql`
+			query($market: String) {
+				ymmes(db_market: $market) {
+					text
+					enum
+				}
+			}
+		`;
+		const query2 = gql`
+			query($market: String, $year: int) {
+				ymmes(db_market: $market, year: $year) {
+					text
+					enum
+				}
+			}
+		`;
 		return (
 			<View style={styles.container}>
-				<Text>Chose market</Text>
-				<Picker
-					style={{ width: 150 }}
-					selectedValue={this.state.ymmes.db_market}
-					onValueChange={this.updateMarket}
-				>
-					<Picker.Item label="us" value="us" />
-					<Picker.Item label="international" value="int" />
-				</Picker>
-				<View style={{ width: 150 }}>
-					<Button onPress={this.onPressQuery} title="Query" color="#841584" />
-				</View>
-				<ApolloProvider client={client}>
-					<Query query={carQuery}>
-						{({ error, loading, data }) => {
-							if (error) return <div>error! ${error}</div>;
-							if (loading) return "Loading...";
-							const { ymmes } = data;
-							return ymmes.map(ymmes => {
-								return <Text key={ymmes.text}>{ymmes.text}</Text>;
-							});
-						}}
-					</Query>
-				</ApolloProvider>
+				<Button onPress={() => this.resetQuery()} title="Reset" color="red" />
+				<ScrollView style={{ alignSelf: "stretch" }}>
+					<View style={styles.picker_wrapper}>
+						<Text>Chose market</Text>
+						<Picker
+							style={{ width: 150 }}
+							selectedValue={this.state.ymmes.db_market}
+							onValueChange={this.updateMarket}
+						>
+							<Picker.Item label="us" value="us" />
+							<Picker.Item label="international" value="int" />
+						</Picker>
+						<Button
+							onPress={() => this.onPressQuery("query1")}
+							title="Query"
+							color="#841584"
+						/>
+						{this.state.showQuery === "query1" && (
+							<ApolloProvider client={client}>
+								<Query
+									query={query1}
+									variables={{ db_market: this.state.ymmes.db_market }}
+									fetchPolicy="network-only"
+								>
+									{({ error, loading, data }) => {
+										if (error) return <Text>error! ${error}</Text>;
+										if (loading) return <Text>"Loading..."</Text>;
+										const { ymmes } = data;
+										return ymmes.map(ymmes => {
+											return (
+												<TouchableOpacity
+													onPress={() => {
+														this.onPressQuery("query2");
+													}}
+													style={styles.result_wrap}
+													key={ymmes.enum}
+												>
+													<Text style={{ width: 100 }}>
+														Year: {ymmes.text}
+													</Text>
+													<Text style={{ width: 80 }}>enum: {ymmes.enum}</Text>
+												</TouchableOpacity>
+											);
+										});
+									}}
+								</Query>
+							</ApolloProvider>
+						)}
+					</View>
+				</ScrollView>
 			</View>
 		);
 	}
@@ -271,5 +344,18 @@ const styles = StyleSheet.create({
 		backgroundColor: "#fff",
 		alignItems: "center",
 		justifyContent: "center"
+	},
+	picker_wrapper: {
+		flex: 1,
+		alignItems: "center",
+		justifyContent: "center"
+	},
+	result_wrap: {
+		flex: 1,
+		flexDirection: "row",
+		justifyContent: "space-evenly",
+		width: 200,
+		height: 30,
+		paddingTop: 5
 	}
 });
